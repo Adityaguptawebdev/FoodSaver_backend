@@ -54,9 +54,14 @@ export const listNearbyDonations = asyncHandler(async (req, res) => {
     };
   }
 
-  const donations = await Donation.find(filter)
-    .populate("donor", "name orgName phone")
-    .sort({ createdAt: -1 });
+  // $near already sorts by distance (nearest first); an explicit sort here
+  // would override that implicit ordering, so only sort by recency when
+  // there's no geo filter to sort by distance instead.
+  let query = Donation.find(filter).populate("donor", "name orgName phone");
+  if (lng === undefined || lat === undefined) {
+    query = query.sort({ createdAt: -1 });
+  }
+  const donations = await query;
 
   res.json({ donations });
 });
