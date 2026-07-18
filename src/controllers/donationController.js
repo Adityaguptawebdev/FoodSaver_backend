@@ -3,6 +3,20 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { enrichDonation } from "../services/geminiService.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 
+export const previewAiTags = asyncHandler(async (req, res) => {
+  const { title, description, foodType, quantity, unit } = req.body;
+  if (!title) {
+    return res.status(400).json({ message: "title is required" });
+  }
+
+  const aiTags = await enrichDonation({ title, description, foodType, quantity, unit }, req.file);
+  if (!aiTags) {
+    return res.status(422).json({ message: "AI enhancement isn't available right now — try again in a moment." });
+  }
+
+  res.json({ ai: aiTags });
+});
+
 export const createDonation = asyncHandler(async (req, res) => {
   const { title, description, foodType, quantity, unit, safeUntil, pickupAddress, lng, lat } = req.body;
 
