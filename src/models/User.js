@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, trim: true },
     orgName: { type: String, trim: true }, // used when role is ngo
+    avatarUrl: { type: String },
     isVerifiedNgo: { type: Boolean, default: false }, // admin verifies NGOs before they can claim
     address: { type: String, trim: true },
     location: {
@@ -47,6 +48,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     role: this.role,
     phone: this.phone,
     orgName: this.orgName,
+    avatarUrl: this.avatarUrl,
     isVerifiedNgo: this.isVerifiedNgo,
     address: this.address,
     location: this.location,
