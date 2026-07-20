@@ -90,11 +90,11 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
       User.find({ role: "donor", "impact.mealsShared": { $gt: 0 } })
         .sort({ "impact.mealsShared": -1 })
         .limit(10)
-        .select("name orgName impact"),
+        .select("name orgName impact avatarUrl"),
       User.find({ role: { $in: ["ngo", "volunteer"] }, "impact.donationsCompleted": { $gt: 0 } })
         .sort({ "impact.donationsCompleted": -1 })
         .limit(10)
-        .select("name orgName role isVerifiedNgo impact"),
+        .select("name orgName role isVerifiedNgo impact avatarUrl"),
     ]);
 
     return res.json({
@@ -105,6 +105,7 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
         orgName: u.orgName,
         mealsShared: u.impact.mealsShared,
         donationsCompleted: u.impact.donationsCompleted,
+        avatarUrl: u.avatarUrl,
       })),
       topOrgs: topOrgs.map((u) => ({
         id: u._id,
@@ -113,6 +114,7 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
         role: u.role,
         isVerified: u.isVerifiedNgo,
         donationsCompleted: u.impact.donationsCompleted,
+        avatarUrl: u.avatarUrl,
       })),
     });
   }
@@ -135,8 +137,8 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
   ]);
 
   const [donorUsers, orgUsers] = await Promise.all([
-    User.find({ _id: { $in: donorAgg.map((d) => d._id) } }).select("name orgName"),
-    User.find({ _id: { $in: orgAgg.map((o) => o._id) } }).select("name orgName role isVerifiedNgo"),
+    User.find({ _id: { $in: donorAgg.map((d) => d._id) } }).select("name orgName avatarUrl"),
+    User.find({ _id: { $in: orgAgg.map((o) => o._id) } }).select("name orgName role isVerifiedNgo avatarUrl"),
   ]);
   const donorMap = Object.fromEntries(donorUsers.map((u) => [String(u._id), u]));
   const orgMap = Object.fromEntries(orgUsers.map((u) => [String(u._id), u]));
@@ -151,6 +153,7 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
         orgName: donorMap[String(d._id)].orgName,
         mealsShared: d.mealsShared,
         donationsCompleted: d.donationsCompleted,
+        avatarUrl: donorMap[String(d._id)].avatarUrl,
       })),
     topOrgs: orgAgg
       .filter((o) => orgMap[String(o._id)])
@@ -161,6 +164,7 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
         role: orgMap[String(o._id)].role,
         isVerified: orgMap[String(o._id)].isVerifiedNgo,
         donationsCompleted: o.donationsCompleted,
+        avatarUrl: orgMap[String(o._id)].avatarUrl,
       })),
   });
 });
