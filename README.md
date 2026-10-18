@@ -3,7 +3,7 @@
 Express + MongoDB API for Food Saver, connecting restaurants and individuals
 with surplus food to nearby NGOs and volunteers.
 
-**Live API: https://foodsaver-backend-yg57.onrender.com** · **Live app: https://food-saver-frontend-seven.vercel.app/**
+**Live API: https://foodsaver-backend-yg57.onrender.com** · **Live app: https://donateforgood.vercel.app/**
 
 Frontend repo: [`FoodSaver_frontend`](https://github.com/Adityaguptawebdev/FoodSaver_frontend) — a static Vite app that talks to this API over HTTP.
 
