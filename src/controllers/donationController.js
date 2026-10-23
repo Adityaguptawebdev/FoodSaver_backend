@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import Donation from "../models/Donation.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { enrichDonation } from "../services/geminiService.js";
+import { notifyNearbyClaimants } from "../services/notificationService.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 
 export const previewAiTags = asyncHandler(async (req, res) => {
@@ -18,7 +20,7 @@ export const previewAiTags = asyncHandler(async (req, res) => {
 });
 
 export const createDonation = asyncHandler(async (req, res) => {
-  const { title, description, foodType, quantity, unit, safeUntil, pickupAddress, lng, lat } = req.body;
+  const { title, description, foodType, quantity, unit, safeUntil, pickupAddress, lng, lat, repostOf } = req.body;
 
   if (!title || !foodType || !quantity || !safeUntil || !pickupAddress || lng === undefined || lat === undefined) {
     return res.status(400).json({
@@ -30,6 +32,10 @@ export const createDonation = asyncHandler(async (req, res) => {
   if (req.file) {
     const uploaded = await uploadBuffer(req.file.buffer, "food-saver/donations");
     photoUrl = uploaded.secure_url;
+  } else if (repostOf && mongoose.isValidObjectId(repostOf)) {
+    // Posting the same food again reuses the earlier listing's photo - only from the donor's own donations.
+    const source = await Donation.findOne({ _id: repostOf, donor: req.user._id }).select("photoUrl");
+    photoUrl = source?.photoUrl;
   }
 
   const donation = await Donation.create({
@@ -44,6 +50,10 @@ export const createDonation = asyncHandler(async (req, res) => {
     photoUrl,
     location: { type: "Point", coordinates: [Number(lng), Number(lat)] },
   });
+
+  // Not awaited: nearby NGOs/volunteers are alerted in parallel with AI enrichment so the donor
+  // isn't kept waiting, and a failure here must never affect the donation that was just created.
+  notifyNearbyClaimants(donation).catch((err) => console.error("Failed to send nearby-donation alerts:", err));
 
   // AI enrichment is best-effort and must never block the donation from being created.
   const aiTags = await enrichDonation(donation, req.file);

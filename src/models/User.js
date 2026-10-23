@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+// Same choices as the Browse page radius picker.
+export const NOTIFY_RADIUS_OPTIONS_KM = [5, 10, 25, 50];
+export const DEFAULT_NOTIFY_RADIUS_KM = 10;
+
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -20,6 +24,8 @@ const userSchema = new mongoose.Schema(
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], default: [0, 0] }, // [lng, lat]
     },
+    // ngo/volunteer only: get alerted about new donations posted within this distance
+    notifyRadiusKm: { type: Number, enum: NOTIFY_RADIUS_OPTIONS_KM, default: DEFAULT_NOTIFY_RADIUS_KM },
     impact: {
       donationsCompleted: { type: Number, default: 0 },
       mealsShared: { type: Number, default: 0 },
@@ -52,6 +58,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     isVerifiedNgo: this.isVerifiedNgo,
     address: this.address,
     location: this.location,
+    notifyRadiusKm: this.notifyRadiusKm,
     impact: this.impact,
   };
 };
