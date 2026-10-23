@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import User, { NOTIFY_RADIUS_OPTIONS_KM } from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadBuffer } from "../config/cloudinary.js";
@@ -54,8 +54,16 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateMe = asyncHandler(async (req, res) => {
-  const { name, phone, orgName, address, lng, lat } = req.body;
+  const { name, phone, orgName, address, lng, lat, notifyRadiusKm } = req.body;
   const user = req.user;
+
+  if (notifyRadiusKm !== undefined) {
+    const radius = Number(notifyRadiusKm);
+    if (!NOTIFY_RADIUS_OPTIONS_KM.includes(radius)) {
+      return res.status(400).json({ message: `notifyRadiusKm must be one of: ${NOTIFY_RADIUS_OPTIONS_KM.join(", ")}` });
+    }
+    user.notifyRadiusKm = radius;
+  }
 
   if (name !== undefined) user.name = name;
   if (phone !== undefined) user.phone = phone;

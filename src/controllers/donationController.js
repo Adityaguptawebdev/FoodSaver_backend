@@ -1,6 +1,7 @@
 import Donation from "../models/Donation.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { enrichDonation } from "../services/geminiService.js";
+import { notifyNearbyClaimants } from "../services/notificationService.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 
 export const previewAiTags = asyncHandler(async (req, res) => {
@@ -44,6 +45,10 @@ export const createDonation = asyncHandler(async (req, res) => {
     photoUrl,
     location: { type: "Point", coordinates: [Number(lng), Number(lat)] },
   });
+
+  // Not awaited: nearby NGOs/volunteers are alerted in parallel with AI enrichment so the donor
+  // isn't kept waiting, and a failure here must never affect the donation that was just created.
+  notifyNearbyClaimants(donation).catch((err) => console.error("Failed to send nearby-donation alerts:", err));
 
   // AI enrichment is best-effort and must never block the donation from being created.
   const aiTags = await enrichDonation(donation, req.file);
